@@ -257,6 +257,8 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 
 		if (limitWidth || limitHeight || extendedLimit)
 			app.sectionContainer.requestReDraw();
+
+		this._syncTileContainerSize();
 	},
 
 	_getCursorPosSize: function () {
@@ -515,6 +517,7 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 
 		var scrollSection = app.sectionContainer.getSectionWithName(L.CSections.Scroll.name);
 		scrollSection.stepByStepScrolling = true;
+		this._syncTileContainerSize();
 	},
 
 	// This initiates a selective repainting of row/col headers and
