@@ -4036,7 +4036,7 @@ std::shared_ptr<TerminatingPoll> COOLWSD:: getWebServerPoll ()
     return WebServerPoll;
 }
 
-void COOLWSD::cleanup()
+void COOLWSD::cleanup([[maybe_unused]] int returnValue)
 {
     try
     {
@@ -4085,7 +4085,7 @@ int COOLWSD::main(const std::vector<std::string>& /*args*/)
     SigUtil::resetTerminationFlags();
 #endif
 
-    int returnValue;
+    int returnValue = EXIT_SOFTWARE;
 
     try {
         returnValue = innerMain();
@@ -4093,16 +4093,23 @@ int COOLWSD::main(const std::vector<std::string>& /*args*/)
     catch (const std::exception& e)
     {
         LOG_FTL("Exception: " << e.what());
-        cleanup();
+        cleanup(returnValue);
         throw;
     } catch (...) {
-        cleanup();
+        cleanup(returnValue);
         throw;
     }
 
-    cleanup();
+    const int unitReturnValue = UnitBase::uninit();
+    if (unitReturnValue != EXIT_OK)
+    {
+        // Overwrite the return value if the unit-test failed.
+        LOG_INF("Overwriting process [coolwsd] exit status ["
+                << returnValue << "] with unit-test status: " << unitReturnValue);
+        returnValue = unitReturnValue;
+    }
 
-    returnValue = UnitBase::uninit();
+    cleanup(returnValue);
 
     LOG_INF("Process [coolwsd] finished with exit status: " << returnValue);
 
