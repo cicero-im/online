@@ -255,10 +255,8 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 
 		this._map.fire('scrolllimits', newSizePx.clone());
 
-		if (limitWidth || limitHeight || extendedLimit)
+		if (!this._syncTileContainerSize() && (limitWidth || limitHeight || extendedLimit))
 			app.sectionContainer.requestReDraw();
-
-		this._syncTileContainerSize();
 	},
 
 	_getCursorPosSize: function () {
@@ -426,7 +424,10 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 		if (heightIncreased || widthIncreased) {
 			app.sectionContainer.requestReDraw();
 			this._map.fire('sizeincreased');
+			return true;
 		}
+
+		return false;
 	},
 
 	_onStatusMsg: function (textMsg) {
