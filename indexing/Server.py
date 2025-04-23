@@ -11,6 +11,7 @@ import os
 import requests
 import xml.etree.ElementTree as ET
 import base64
+import defusedxml.ElementTree
 
 # Configuration
 coolServerUrl = "http://localhost:9980"
@@ -27,7 +28,7 @@ solrUpdateUrl = "{}/solr/{}/update?commit=true".format(solrServerUrl, solrCollec
 
 # Transform the LO indexing XML structure to Solr structure
 def transformToSolrFormat(xmlContent, filename):
-    root = ET.fromstring(xmlContent)
+    root = defusedxml.ElementTree.fromstring(xmlContent)
     builder = ET.TreeBuilder()
     builder.start("add", {})
 
