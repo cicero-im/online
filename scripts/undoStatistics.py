@@ -14,6 +14,7 @@ from lxml import etree
 import os
 import sys
 import statistics
+import lxml.etree
 
 def usageAndExit():
     message = """usage: {program} logfile_path
@@ -153,7 +154,7 @@ def createCommandTransitionMatrix(commandTransitions):
 
 def addSheetWithData(templateFile, outputFile, dataSets, NSMAP):
     def parseTemplate(file):
-        tree = etree.parse(file)
+        tree = etree.parse(file, parser=lxml.etree.XMLParser(resolve_entities=False))
         root = tree.getroot()
         spreadsheet = root.find(f".//office:spreadsheet", namespaces=NSMAP)
         template = root.find(f".//table:table[@table:name='Sheet1']", namespaces=NSMAP)
@@ -246,7 +247,7 @@ def addSheetWithData(templateFile, outputFile, dataSets, NSMAP):
         if sourceSheet is None:
             raise ValueError(f"Source table '{sourceSheetName}' not found in the source tree.")
 
-        newTable = etree.fromstring(etree.tostring(sourceSheet))
+        newTable = etree.fromstring(etree.tostring(sourceSheet), parser=lxml.etree.XMLParser(resolve_entities=False))
         newTable.set(f"{{{NSMAP['table']}}}name", newSheetName)
 
         spreadsheet = root.find(".//office:spreadsheet", namespaces=NSMAP)
@@ -313,7 +314,7 @@ def chartStatistics(inputFile, NSMAP, sheetsToLogarithmic):
         }
 
         def parseInput(file):
-            tree = etree.parse(file)
+            tree = etree.parse(file, parser=lxml.etree.XMLParser(resolve_entities=False))
             root = tree.getroot()
             return tree, root
 

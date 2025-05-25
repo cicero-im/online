@@ -15,6 +15,7 @@ import re
 import sys
 import polib
 from lxml import etree
+import lxml.etree
 
 
 def usageAndExit():
@@ -210,7 +211,7 @@ def extractToolbarCommands(path):
 
 # Create mapping between the commands and appropriate strings
 def collectCommandsFromXCU(xcu, descriptions, commands, label, type):
-    root = etree.parse(xcu)
+    root = etree.parse(xcu, parser=lxml.etree.XMLParser(resolve_entities=False))
     nodes = root.xpath("/oor:component-data/node/node/node", namespaces={
         'oor': 'http://openoffice.org/2001/registry',
         })
