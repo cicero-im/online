@@ -13,8 +13,8 @@
 import os
 import re
 import sys
-import random
 import shutil
+import secrets
 
 def usageAndExit():
     message = """usage: {program} template_path dest_path
@@ -100,7 +100,7 @@ def substitute(queue, var):
                    'Female' ]
         geo = [ 'United States', 'Great Britain', 'Germany', 'France' ]
 
-        rng = random.Random()
+        rng = secrets.SystemRandom().Random()
         rng.seed(42)
 
         for i in range(1,5000):
