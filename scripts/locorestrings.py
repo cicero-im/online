@@ -108,19 +108,18 @@ if __name__ == "__main__":
         # extract language names
         poFile = dir + lang + '/svtools/messages.po'
         extractFromPo(poFile, ["STR_ARR_SVT_LANGUAGE_TABLE"], translations)
+        with open(onlineDir + '/browser/l10n/locore/' + lang + '.json', 'w', encoding='utf-8') as f:
+            f.write('{\n')
 
-        f = open(onlineDir + '/browser/l10n/locore/' + lang + '.json', 'w', encoding='utf-8')
-        f.write('{\n')
+            writeComma = False
+            for key in sorted(translations.keys()):
+                if writeComma:
+                    f.write(',\n')
+                else:
+                    writeComma = True
+                f.write(
+                    ('"' + key + '":"' + translations[key] + '"'))
 
-        writeComma = False
-        for key in sorted(translations.keys()):
-            if writeComma:
-                f.write(',\n')
-            else:
-                writeComma = True
-            f.write(
-                ('"' + key + '":"' + translations[key] + '"'))
-
-        f.write('\n}\n')
+            f.write('\n}\n')
 
 # vim: set shiftwidth=4 softtabstop=4 expandtab:

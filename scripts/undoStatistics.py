@@ -488,141 +488,139 @@ if __name__ == "__main__":
 
     # Check if the file has kit order problem, and fix it
     newFileName = reorderLogFile(sys.argv[1])
+    with open(newFileName, 'r') as f:
+        for line in f:
+            if line.startswith("log-start-time:"):
+                pass
+            elif line.startswith("log-end-time:"):
+                active = 0
+                for user in users.values():
+                    if user.edited:
+                        active += 1
+                    # get the user fastest and median char/sec value
+                    if len(user.typeSpeed) > 0:
+                        user.typeSpeed.sort(key=lambda x: x[0], reverse=True)
+                        charCount = sum(i for _,i in user.typeSpeed)
+                        charCountTemp = 0
+                        medianSpeed = 0
+                        for i,j in user.typeSpeed:
+                            charCountTemp += j
+                            if charCountTemp >= charCount / 2:
+                                medianSpeed = i
+                                break
+                        userCharPerSec.append((user.typeSpeed[0][0],medianSpeed))
+                documents.append(Document(len(users), active))
+                users = {}
+            else:
+                numbUser = line.find("user=")
+                numbRep = line.find("rep=")
+                cmdStart = line[numbRep:].find(" ")+numbRep+1
 
-    # Process all Document related, and undo related calculations
-    f = open(newFileName, 'r')
-    for line in f:
-        if line.startswith("log-start-time:"):
-            pass
-        elif line.startswith("log-end-time:"):
-            active = 0
-            for user in users.values():
-                if user.edited:
-                    active += 1
-                # get the user fastest and median char/sec value
-                if len(user.typeSpeed) > 0:
-                    user.typeSpeed.sort(key=lambda x: x[0], reverse=True)
-                    charCount = sum(i for _,i in user.typeSpeed)
-                    charCountTemp = 0
-                    medianSpeed = 0
-                    for i,j in user.typeSpeed:
-                        charCountTemp += j
-                        if charCountTemp >= charCount / 2:
-                            medianSpeed = i
-                            break
-                    userCharPerSec.append((user.typeSpeed[0][0],medianSpeed))
-            documents.append(Document(len(users), active))
-            users = {}
-        else:
-            numbUser = line.find("user=")
-            numbRep = line.find("rep=")
-            cmdStart = line[numbRep:].find(" ")+numbRep+1
+                userId = int(line[numbUser+5:numbRep])
+                repeat = int(line[numbRep+4:cmdStart])
+                lineCmd = line[cmdStart:]
 
-            userId = int(line[numbUser+5:numbRep])
-            repeat = int(line[numbRep+4:cmdStart])
-            lineCmd = line[cmdStart:]
+                duration = 0
+                numbDur = line.find("dur=")
+                if numbDur >= 0 and numbDur < numbUser:
+                    duration = float(line[numbDur+4:numbUser])
 
-            duration = 0
-            numbDur = line.find("dur=")
-            if numbDur >= 0 and numbDur < numbUser:
-                duration = float(line[numbDur+4:numbUser])
+                if userId >= 0 :
+                    if userId not in users:
+                        users[userId] = User()
 
-            if userId >= 0 :
-                if userId not in users:
-                    users[userId] = User()
+                    if lineCmd.startswith("cmd:"):
+                        lineCmdCropped = lineCmd[4:-1]
+                        if lineCmd.startswith("cmd:load") or lineCmd.startswith("cmd:save"):
+                            lineCmdCropped = lineCmd[4:8]
+                        elif lineCmd.startswith("cmd:exportas"):
+                            lineCmdCropped = lineCmd[4:12]
 
-                if lineCmd.startswith("cmd:"):
-                    lineCmdCropped = lineCmd[4:-1]
-                    if lineCmd.startswith("cmd:load") or lineCmd.startswith("cmd:save"):
-                        lineCmdCropped = lineCmd[4:8]
-                    elif lineCmd.startswith("cmd:exportas"):
-                        lineCmdCropped = lineCmd[4:12]
+                        key = f"{lineCmdCropped}|{users[userId].lastCmd}"
+                        currentCommandPreviousCommand[key] = currentCommandPreviousCommand.get(key, 0) + 1
 
-                    key = f"{lineCmdCropped}|{users[userId].lastCmd}"
-                    currentCommandPreviousCommand[key] = currentCommandPreviousCommand.get(key, 0) + 1
+                        users[userId].lastCmd = lineCmdCropped
+                        if lineCmd.startswith("cmd:textinput") or lineCmd.startswith("cmd:removetextcontext"):
+                            users[userId].edited = True
+                        if lineCmd.startswith("cmd:textinput") and repeat > 1:
+                            # duration used to calculate chars per sec
+                            if (duration > 0):
+                                users[userId].typeSpeed.append(((repeat-1)/duration, repeat-1))
 
-                    users[userId].lastCmd = lineCmdCropped
-                    if lineCmd.startswith("cmd:textinput") or lineCmd.startswith("cmd:removetextcontext"):
-                        users[userId].edited = True
-                    if lineCmd.startswith("cmd:textinput") and repeat > 1:
-                        # duration used to calculate chars per sec
-                        if (duration > 0):
-                            users[userId].typeSpeed.append(((repeat-1)/duration, repeat-1))
+                    elif lineCmd.startswith("undo-count-change:"):
+                        if lineCmd[18] == "+":
+                            users[userId].undoChgStack.append([repeat, users[userId].lastCmd])
+                        else: #"-"
+                            toDelete = repeat
+                            while toDelete > 0:
+                                deleted = 0
+                                stackLen = len(users[userId].undoChgStack) - 1
+                                if stackLen >= 0:
+                                    cmd = users[userId].undoChgStack[stackLen][1]
+                                    if users[userId].undoChgStack[stackLen][0] > toDelete:
+                                        users[userId].undoChgStack[stackLen][0] -= toDelete
+                                        deleted = toDelete
+                                        toDelete = 0
+                                    else:
+                                        deleted = users[userId].undoChgStack[stackLen][0]
+                                        toDelete -= users[userId].undoChgStack[stackLen][0]
+                                        users[userId].undoChgStack.pop()
 
-                elif lineCmd.startswith("undo-count-change:"):
-                    if lineCmd[18] == "+":
-                        users[userId].undoChgStack.append([repeat, users[userId].lastCmd])
-                    else: #"-"
-                        toDelete = repeat
-                        while toDelete > 0:
-                            deleted = 0
-                            stackLen = len(users[userId].undoChgStack) - 1
-                            if stackLen >= 0:
-                                cmd = users[userId].undoChgStack[stackLen][1]
-                                if users[userId].undoChgStack[stackLen][0] > toDelete:
-                                    users[userId].undoChgStack[stackLen][0] -= toDelete
-                                    deleted = toDelete
-                                    toDelete = 0
+                                    actValue = 0
+                                    if cmd in undoedCommands:
+                                        actValue = undoedCommands[cmd]
+
+                                    actValue += deleted
+                                    undoedCommands[cmd] = actValue
                                 else:
-                                    deleted = users[userId].undoChgStack[stackLen][0]
-                                    toDelete -= users[userId].undoChgStack[stackLen][0]
-                                    users[userId].undoChgStack.pop()
+                                    # There is a problem.. undo without undoable change
+                                    # Now calculate them to unknown command
+                                    # Or we could simply skip them
+                                    cmd = "unknown"
+                                    if cmd in undoedCommands:
+                                        actValue = undoedCommands[cmd]
+                                    actValue += toDelete
+                                    undoedCommands[cmd] = actValue
+                                    toDelete = 0
 
-                                actValue = 0
-                                if cmd in undoedCommands:
-                                    actValue = undoedCommands[cmd]
-
-                                actValue += deleted
-                                undoedCommands[cmd] = actValue
-                            else:
-                                # There is a problem.. undo without undoable change
-                                # Now calculate them to unknown command
-                                # Or we could simply skip them
-                                cmd = "unknown"
-                                if cmd in undoedCommands:
-                                    actValue = undoedCommands[cmd]
-                                actValue += toDelete
-                                undoedCommands[cmd] = actValue
-                                toDelete = 0
-
-            if lineCmd.startswith("cmd:load") or lineCmd.startswith("cmd:save"):
-                numbSize = lineCmd.find("size=")
-                numbExt = lineCmd.find("ext=")
-                fileSize = int(round(int(lineCmd[numbSize+5:numbExt])/1024))
-                fileSize = round(fileSize , 1-len(str(fileSize)))
-                fileExt = lineCmd[numbExt+4:-1]
-                if lineCmd.startswith("cmd:load"):
-                    loadSizeTimeExt.append([fileSize, duration, fileExt])
-                elif lineCmd.startswith("cmd:savebg"):
-                    saveBgSizeTimeExt.append([fileSize, duration, fileExt])
-                elif lineCmd.startswith("cmd:saveas"):
-                    saveAsSizeTimeExt.append([fileSize, duration, fileExt])
-                elif lineCmd.startswith("cmd:save"):
-                    saveSizeTimeExt.append([fileSize, duration, fileExt])
-                #exportas ?
-
-    # re-check undoed commands, how many times they are used, to calculate how many % of it undoed.
-    for cmd in undoedCommands.keys():
-        totalUndoedCommands[cmd] = 0
-
-    actIndex=-1
-    f = open(newFileName, 'r')
-    for line in f:
-        if line.startswith("kit="):
-            numbRep = line.find("rep=")
-            cmdStart = line[numbRep:].find(" ")+numbRep+1
-            repeat = int(line[numbRep+4:cmdStart])
-            lineCmd = line[cmdStart:]
-            if lineCmd.startswith("cmd:"):
-                cmd = lineCmd[4:-1]
                 if lineCmd.startswith("cmd:load") or lineCmd.startswith("cmd:save"):
-                    cmd = lineCmd[4:8]
-                elif lineCmd.startswith("cmd:exportas"):
-                    cmd = lineCmd[4:12]
+                    numbSize = lineCmd.find("size=")
+                    numbExt = lineCmd.find("ext=")
+                    fileSize = int(round(int(lineCmd[numbSize+5:numbExt])/1024))
+                    fileSize = round(fileSize , 1-len(str(fileSize)))
+                    fileExt = lineCmd[numbExt+4:-1]
+                    if lineCmd.startswith("cmd:load"):
+                        loadSizeTimeExt.append([fileSize, duration, fileExt])
+                    elif lineCmd.startswith("cmd:savebg"):
+                        saveBgSizeTimeExt.append([fileSize, duration, fileExt])
+                    elif lineCmd.startswith("cmd:saveas"):
+                        saveAsSizeTimeExt.append([fileSize, duration, fileExt])
+                    elif lineCmd.startswith("cmd:save"):
+                        saveSizeTimeExt.append([fileSize, duration, fileExt])
+                    #exportas ?
 
-                if cmd in totalUndoedCommands.keys():
-                    totalUndoedCommands[cmd] += repeat
-                totalCommands[cmd] = totalCommands.get(cmd, 0) + repeat
+        # re-check undoed commands, how many times they are used, to calculate how many % of it undoed.
+        for cmd in undoedCommands.keys():
+            totalUndoedCommands[cmd] = 0
+
+        actIndex=-1
+        f = open(newFileName, 'r')
+        for line in f:
+            if line.startswith("kit="):
+                numbRep = line.find("rep=")
+                cmdStart = line[numbRep:].find(" ")+numbRep+1
+                repeat = int(line[numbRep+4:cmdStart])
+                lineCmd = line[cmdStart:]
+                if lineCmd.startswith("cmd:"):
+                    cmd = lineCmd[4:-1]
+                    if lineCmd.startswith("cmd:load") or lineCmd.startswith("cmd:save"):
+                        cmd = lineCmd[4:8]
+                    elif lineCmd.startswith("cmd:exportas"):
+                        cmd = lineCmd[4:12]
+
+                    if cmd in totalUndoedCommands.keys():
+                        totalUndoedCommands[cmd] += repeat
+                    totalCommands[cmd] = totalCommands.get(cmd, 0) + repeat
 
     documentsOpened = len(documents)
     documentsEdited = 0

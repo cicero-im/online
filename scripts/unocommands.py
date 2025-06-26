@@ -77,14 +77,12 @@ def commandFromMenuLine(line):
 # Extract all the uno commands we are using in the Online menu
 def extractMenuCommands(path):
     commands = []
-
-    # extract from the menu specifications
-    f = open(path + '/browser/src/control/Control.Menubar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("uno:") >= 0 and line.find("name:") < 0:
-            commands += commandFromMenuLine(line)
-        elif line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+    with open(path + '/browser/src/control/Control.Menubar.js', 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.find("uno:") >= 0 and line.find("name:") < 0:
+                commands += commandFromMenuLine(line)
+            elif line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
     # may the list unique
     return set(commands)
@@ -94,32 +92,30 @@ def extractMenuCommands(path):
 def extractContextCommands(path):
     commandsToIgnore = ["FontDialogForParagraph"]
     commands = []
+    with open(path + '/browser/src/control/Control.ContextMenu.js', 'r', encoding='utf-8') as f:
+        readingCommands = False
+        for line in f:
+            if line.find('UNOCOMMANDS_EXTRACT_START') >= 0:
+                readingCommands = True
+            elif line.find('UNOCOMMANDS_EXTRACT_END') >= 0:
+                readingCommands = False
+            elif readingCommands:
+                commands += commandsFromLine(line)
 
-    # extract from the comments whitelist
-    f = open(path + '/browser/src/control/Control.ContextMenu.js', 'r', encoding='utf-8')
-    readingCommands = False
-    for line in f:
-        if line.find('UNOCOMMANDS_EXTRACT_START') >= 0:
-            readingCommands = True
-        elif line.find('UNOCOMMANDS_EXTRACT_END') >= 0:
-            readingCommands = False
-        elif readingCommands:
-            commands += commandsFromLine(line)
+        f = open(path + '/browser/src/control/Control.ColumnHeader.ts', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.ColumnHeader.ts', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.RowHeader.ts', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.RowHeader.ts', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
-
-    f = open(path + '/browser/src/control/Control.Tabs.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.Tabs.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
     commands = [command for command in commands
                 if command not in commandsToIgnore]
@@ -130,79 +126,77 @@ def extractContextCommands(path):
 # Extract all the uno commands we are using in the Online toolbar
 def extractToolbarCommands(path):
     commands = []
+    with open(path + '/browser/src/control/Control.Toolbar.js', 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    # extract from the toolbars
-    f = open(path + '/browser/src/control/Control.Toolbar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.MobileBottomBar.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.MobileBottomBar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.MobileTopBar.ts', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.MobileTopBar.ts', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.MobileWizardBuilder.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.MobileWizardBuilder.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path +
+                 '/browser/src/control/Control.NotebookbarBuilder.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path +
-             '/browser/src/control/Control.NotebookbarBuilder.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.Notebookbar.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.Notebookbar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.NotebookbarWriter.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.NotebookbarWriter.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.NotebookbarCalc.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.NotebookbarCalc.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path +
+                 '/browser/src/control/Control.NotebookbarImpress.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path +
-             '/browser/src/control/Control.NotebookbarImpress.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.NotebookbarDraw.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.NotebookbarDraw.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.PresentationBar.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.PresentationBar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.MobileSearchBar.ts', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.MobileSearchBar.ts', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.StatusBar.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
-    f = open(path + '/browser/src/control/Control.StatusBar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
-
-    f = open(path + '/browser/src/control/Control.TopToolbar.js', 'r', encoding='utf-8')
-    for line in f:
-        if line.find("_UNO(") >= 0:
-            commands += commandFromMenuLine(line)
+        f = open(path + '/browser/src/control/Control.TopToolbar.js', 'r', encoding='utf-8')
+        for line in f:
+            if line.find("_UNO(") >= 0:
+                commands += commandFromMenuLine(line)
 
     # may the list unique
     return set(commands)
@@ -302,25 +296,23 @@ def writeUnocommandsJS(
                                                   descriptions,
                                                   toolbarCommands,
                                                   'Label', type)
-
-    # output the unocommands.js
-    f = open(onlineDir + '/browser/src/unocommands.js', 'w',
-             encoding='utf-8')
-    f.write('''// Don't modify, generated using unocommands.py
+    with open(onlineDir + '/browser/src/unocommands.js', 'w',
+             encoding='utf-8') as f:
+        f.write('''// Don't modify, generated using unocommands.py
 
 var unoCommandsArray = {\n''')
 
-    for key in sorted(descriptions.keys()):
-        f.write('\t\'' + key + '\':{')
-        for type in sorted(descriptions[key].keys()):
-            f.write(type + ':{')
-            for menuType in sorted(descriptions[key][type].keys()):
-                f.write(menuType + ":_('" + descriptions[key][type][menuType]
-                        + "'),")
-            f.write('},')
-        f.write('},\n')
+        for key in sorted(descriptions.keys()):
+            f.write('\t\'' + key + '\':{')
+            for type in sorted(descriptions[key].keys()):
+                f.write(type + ':{')
+                for menuType in sorted(descriptions[key][type].keys()):
+                    f.write(menuType + ":_('" + descriptions[key][type][menuType]
+                            + "'),")
+                f.write('},')
+            f.write('},\n')
 
-    f.write('''};
+        f.write('''};
 
 window._UNO = function(string, component, isContext) {
 \tvar command = string.substr(5);
@@ -369,17 +361,16 @@ window.removeAccessKey = function(text) {
 # Read the uno commands present in the unocommands.js for checking
 def parseUnocommandsJS(onlineDir):
     strings = {}
+    with open(onlineDir + '/browser/src/unocommands.js', 'r',
+             encoding='utf-8') as f:
+        for line in f:
+            m = re.match(r"\t\'([^:]*)\':.*", line)
+            if m:
+                command = m.group(1)
 
-    f = open(onlineDir + '/browser/src/unocommands.js', 'r',
-             encoding='utf-8')
-    for line in f:
-        m = re.match(r"\t\'([^:]*)\':.*", line)
-        if m:
-            command = m.group(1)
-
-            n = re.findall(r"_\('([^']*)'\)", line)
-            if n:
-                strings[command] = n
+                n = re.findall(r"_\('([^']*)'\)", line)
+                if n:
+                    strings[command] = n
 
     return strings
 
@@ -408,21 +399,20 @@ def writeTranslations(onlineDir, translationsDir, strings):
                     for text in strings[command]:
                         if text == entry.msgid:
                             translations[entry.msgid] = entry.msgstr
+        with open(onlineDir + '/browser/l10n/uno/' +
+                 lang + '.json', 'w', encoding='utf-8') as f:
+            f.write('{\n')
 
-        f = open(onlineDir + '/browser/l10n/uno/' +
-                 lang + '.json', 'w', encoding='utf-8')
-        f.write('{\n')
+            writeComma = False
+            for key in sorted(translations.keys()):
+                if writeComma:
+                    f.write(',\n')
+                else:
+                    writeComma = True
+                f.write('"' + key.replace('"', '\\\"') + '":"' +
+                        translations[key].replace('"', '\\\"') + '"')
 
-        writeComma = False
-        for key in sorted(translations.keys()):
-            if writeComma:
-                f.write(',\n')
-            else:
-                writeComma = True
-            f.write('"' + key.replace('"', '\\\"') + '":"' +
-                    translations[key].replace('"', '\\\"') + '"')
-
-        f.write('\n}\n')
+            f.write('\n}\n')
 
 
 if __name__ == "__main__":
