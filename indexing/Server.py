@@ -11,6 +11,7 @@ import os
 import requests
 import xml.etree.ElementTree as ET
 import base64
+from security import safe_requests
 
 # Configuration
 coolServerUrl = "http://localhost:9980"
@@ -109,7 +110,7 @@ def callQueryServiceOnSolr(jsonString):
     searchStructure = json.loads(jsonString)
     query = searchStructure['query']
 
-    response = requests.get("{}?rows=50&q=content:{}".format(solrSelectUrl, query))
+    response = safe_requests.get("{}?rows=50&q=content:{}".format(solrSelectUrl, query))
     result = response.json()
     responseBody = result['response']
     if responseBody['numFound'] > 0:
