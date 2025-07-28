@@ -11,6 +11,7 @@ from __future__ import print_function
 import os
 import sys
 import xml.sax
+import defusedxml.sax
 
 
 class DiscoveryHandler(xml.sax.handler.ContentHandler):
@@ -143,7 +144,7 @@ def getExtensionProperties(filterDir):
     for typeFragment in os.listdir(typeFragments):
         if not typeFragment.endswith(".xcu"):
             continue
-        parser = xml.sax.make_parser()
+        parser = defusedxml.sax.make_parser()
         filterTypeHandler = FilterTypeHandler()
         parser.setContentHandler(filterTypeHandler)
         parser.parse(os.path.join(typeFragments, typeFragment))
@@ -158,7 +159,7 @@ def getExtensionProperties(filterDir):
     for filterFragment in os.listdir(filterFragments):
         if not filterFragment.endswith(".xcu"):
             continue
-        parser = xml.sax.make_parser()
+        parser = defusedxml.sax.make_parser()
         handler = FilterFragmentHandler()
         parser.setContentHandler(handler)
         parser.parse(os.path.join(filterFragments, filterFragment))
@@ -218,7 +219,7 @@ def main():
 
     # Parse discovery.xml, which describes what online.git exposes at the
     # moment.
-    parser = xml.sax.make_parser()
+    parser = defusedxml.sax.make_parser()
     discoveryHandler = DiscoveryHandler()
     parser.setContentHandler(discoveryHandler)
     parser.parse(discoveryXml)
