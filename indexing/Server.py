@@ -79,7 +79,7 @@ def callConvertToIndexingXml(filename, filepath):
     filesDict = {
         'data': (filepath, open(filepath, 'rb'), None, {})
     }
-    response = requests.post("{}/cool/convert-to/xml".format(coolServerUrl), files=filesDict)
+    response = requests.post("{}/cool/convert-to/xml".format(coolServerUrl), files=filesDict, timeout=60)
     if response.ok:
         return response.content
     return None
@@ -89,7 +89,7 @@ def runReindexProcess():
     headers = {'Content-Type' : 'text/xml'}
 
     # remove existing entries from the database
-    requests.post(solrUpdateUrl, data=createSolrDeleteXml(), headers=headers)
+    requests.post(solrUpdateUrl, data=createSolrDeleteXml(), headers=headers, timeout=60)
 
     # add the new indices into SOLR server
     for document in getDocuments():
@@ -99,7 +99,7 @@ def runReindexProcess():
             # add indexing XML values
             headers = {'Content-Type' : 'text/xml'}
             solrTransformed = transformToSolrFormat(xmlContent, filename)
-            response = requests.post(solrUpdateUrl, data=solrTransformed, headers=headers)
+            response = requests.post(solrUpdateUrl, data=solrTransformed, headers=headers, timeout=60)
             if not response.ok:
                 return False
     return True
@@ -109,7 +109,7 @@ def callQueryServiceOnSolr(jsonString):
     searchStructure = json.loads(jsonString)
     query = searchStructure['query']
 
-    response = requests.get("{}?rows=50&q=content:{}".format(solrSelectUrl, query))
+    response = requests.get("{}?rows=50&q=content:{}".format(solrSelectUrl, query), timeout=60)
     result = response.json()
     responseBody = result['response']
     if responseBody['numFound'] > 0:
@@ -151,7 +151,7 @@ def callRenderImageService(resultJsonString):
         "document": (filename, open(documentPath + filename, 'rb'), None, {}),
         "result" : ("json", resultJsonProcessed, None, {})
     }
-    response = requests.post("{}/cool/render-search-result".format(coolServerUrl), files=filesDict)
+    response = requests.post("{}/cool/render-search-result".format(coolServerUrl), files=filesDict, timeout=60)
     return base64.b64encode(response.content)
 
 # HTTP Server - Handle HTTP requests
